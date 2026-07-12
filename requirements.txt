@@ -1,0 +1,4 @@
+# Python 3.11-3.13 recommended on Windows because pygame 2.6.1 may not install on Python 3.14.
+pygame==2.6.1
+python-chess==1.999
+pytest==8.3.2
