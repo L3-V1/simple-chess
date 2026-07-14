@@ -3,18 +3,18 @@ from __future__ import annotations
 import chess
 import pygame
 
-from core import COLOR_PALETTE, DISPLAY_SETTINGS, ELO_RATINGS, EloRating
-from models import GameSession, PROMOTION_PIECES
-from views.layout import (
+from src.core import COLOR_PALETTE, DISPLAY_SETTINGS, ELO_RATINGS, EloRating
+from src.models import GameSession, PROMOTION_PIECES
+from src.views.layout import (
     build_color_buttons,
     build_menu_start_button,
     build_primary_action_button,
     build_rating_slider,
 )
-from views.move_history import format_move_history
-from views.piece_factory import PieceSpriteFactory
-from views.text_renderer import TextRenderer, UiFont
-from views.view_models import ActionButton, ColorButton, RatingSlider
+from src.views.move_history import format_move_history
+from src.views.piece_factory import PieceSpriteFactory
+from src.views.text_renderer import TextRenderer, UiFont
+from src.views.view_models import ActionButton, ColorButton, RatingSlider
 
 
 class ChessRenderer:
@@ -57,6 +57,12 @@ class ChessRenderer:
         )
         self.screen.blit(title_surface, title_surface.get_rect(center=(450, 104)))
         self.screen.blit(subtitle_surface, subtitle_surface.get_rect(center=(450, 144)))
+        color_prompt_surface = self._render_text(
+            self.body_font,
+            "Escolha com quais peças voce vai jogar:",
+            (255, 255, 255),
+        )
+        self.screen.blit(color_prompt_surface, color_prompt_surface.get_rect(center=(450, 198)))
 
         for button in self.color_buttons():
             self._draw_color_button(button, selected_color)
@@ -327,12 +333,25 @@ class ChessRenderer:
             pygame.draw.rect(self.screen, color, rect, border_radius=4)
 
     def _draw_color_button(self, button: ColorButton, selected_color: chess.Color) -> None:
-        fill_color = self.palette.accent if button.color == selected_color else self.palette.panel
+        is_selected = button.color == selected_color
+        fill_color = self.palette.accent if is_selected else self.palette.panel
         pygame.draw.rect(self.screen, fill_color, button.rect, border_radius=12)
         pygame.draw.rect(self.screen, self.palette.light_square, button.rect, width=2, border_radius=12)
-        label = "Jogar com brancas" if button.color == chess.WHITE else "Jogar com pretas"
+        label = "Brancas" if button.color == chess.WHITE else "Pretas"
         label_surface = self._render_text(self.small_font, label)
-        self.screen.blit(label_surface, label_surface.get_rect(center=button.rect.center))
+        label_rect = pygame.Rect(button.rect.left + 40, button.rect.top, button.rect.width - 52, button.rect.height)
+        if is_selected:
+            self._draw_selected_color_icon(button)
+        self.screen.blit(label_surface, label_surface.get_rect(center=label_rect.center))
+
+    def _draw_selected_color_icon(self, button: ColorButton) -> None:
+        marker_piece = chess.Piece(chess.PAWN, button.color)
+        marker_surface = pygame.transform.smoothscale(
+            self.piece_factory.get_sprite(marker_piece),
+            (28, 28),
+        )
+        marker_rect = marker_surface.get_rect(midleft=(button.rect.left + 16, button.rect.centery))
+        self.screen.blit(marker_surface, marker_rect)
 
     def _draw_rating_slider(self, selected_rating: EloRating) -> None:
         slider = self.rating_slider()

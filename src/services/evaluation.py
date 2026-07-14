@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 import chess
 
-from core import AiProfile
-from services.evaluation_tables import (
+from src.core import AiProfile
+from src.services.evaluation_tables import (
     CENTER_SQUARES,
     EXTENDED_CENTER_SQUARES,
     MOBILITY_WEIGHTS,

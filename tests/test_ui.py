@@ -1,10 +1,10 @@
 import chess
 import pygame
 
-from core import EloRating
-from models import GameSession
-from views import PieceSpriteFactory
-from views.renderer import ChessRenderer
+from src.core import EloRating
+from src.models import GameSession
+from src.views import PieceSpriteFactory
+from src.views.renderer import ChessRenderer
 
 
 def test_piece_sprite_factory_loads_default_piece_set() -> None:

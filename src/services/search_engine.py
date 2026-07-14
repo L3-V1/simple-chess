@@ -7,9 +7,9 @@ from dataclasses import dataclass, field
 
 import chess
 
-from core import AiProfile
-from services.evaluation import BoardEvaluator
-from services.evaluation_tables import PIECE_VALUES
+from src.core import AiProfile
+from src.services.evaluation import BoardEvaluator
+from src.services.evaluation_tables import PIECE_VALUES
 
 
 class SearchTimeout(Exception):

@@ -1,5 +1,5 @@
 """Application controllers."""
 
-from controllers.application import ChessApplication
+from src.controllers.application import ChessApplication
 
 __all__ = ["ChessApplication"]

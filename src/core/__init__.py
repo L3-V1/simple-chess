@@ -1,6 +1,6 @@
 """Core configuration and shared constants."""
 
-from core.settings import (
+from src.core.settings import (
     AI_PROFILES,
     COLOR_PALETTE,
     DISPLAY_SETTINGS,

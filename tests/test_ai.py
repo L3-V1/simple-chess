@@ -1,8 +1,8 @@
 import chess
 import random
 
-from core import AI_PROFILES, ELO_RATINGS, EloRating
-from services import BoardEvaluator, ComputerPlayer
+from src.core import AI_PROFILES, ELO_RATINGS, EloRating
+from src.services import BoardEvaluator, ComputerPlayer
 
 
 def test_supported_elo_ratings_cover_500_to_2500_in_steps_of_500() -> None:

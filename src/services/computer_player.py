@@ -5,10 +5,10 @@ from dataclasses import dataclass, field
 
 import chess
 
-from core import AI_PROFILES, AiProfile, EloRating
-from services.evaluation import BoardEvaluator, PIECE_VALUES
-from services.opening_book import choose_opening_move
-from services.search_engine import MinimaxSearchEngine
+from src.core import AI_PROFILES, AiProfile, EloRating
+from src.services.evaluation import BoardEvaluator, PIECE_VALUES
+from src.services.opening_book import choose_opening_move
+from src.services.search_engine import MinimaxSearchEngine
 
 
 @dataclass

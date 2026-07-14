@@ -6,10 +6,10 @@ from pathlib import Path
 import chess
 import pygame
 
-from core import EloRating
-from models import GameSession
-from services import ComputerPlayer, SoundManager
-from views import ChessRenderer
+from src.core import EloRating
+from src.models import GameSession
+from src.services import ComputerPlayer, SoundManager
+from src.views import ChessRenderer
 
 
 class ChessApplication:

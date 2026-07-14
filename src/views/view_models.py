@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import chess
 import pygame
 
-from core import EloRating
+from src.core import EloRating
 
 
 @dataclass(frozen=True)

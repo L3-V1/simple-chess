@@ -1,18 +1,10 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
-
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-SRC_PATH = PROJECT_ROOT / "src"
 MIN_SUPPORTED_VERSION = (3, 11)
 MAX_SUPPORTED_VERSION = (3, 13)
 
-if str(SRC_PATH) not in sys.path:
-    sys.path.insert(0, str(SRC_PATH))
-
-from app import ChessApplication
+from src.app import ChessApplication
 
 
 def main() -> None:

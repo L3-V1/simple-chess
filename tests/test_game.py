@@ -1,6 +1,6 @@
 import chess
 
-from models import GameSession
+from src.models import GameSession
 
 
 def test_game_session_selects_and_applies_pawn_move() -> None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import chess
 
-from models import GameSession
+from src.models import GameSession
 
 
 def format_move_history(session: GameSession) -> list[str]:

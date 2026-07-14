@@ -1,9 +1,9 @@
 """Application services."""
 
-from services.audio import SoundManager
-from services.computer_player import ComputerPlayer
-from services.evaluation import BoardEvaluator, PIECE_VALUES
-from services.search_engine import SearchTimeout
+from src.services.audio import SoundManager
+from src.services.computer_player import ComputerPlayer
+from src.services.evaluation import BoardEvaluator, PIECE_VALUES
+from src.services.search_engine import SearchTimeout
 
 __all__ = [
     "BoardEvaluator",

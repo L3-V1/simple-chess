@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from controllers import ChessApplication
+from src.controllers import ChessApplication
 
 
 def main() -> None:
