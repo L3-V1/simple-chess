@@ -51,3 +51,29 @@ def test_game_session_reset_clears_resignation_state() -> None:
 
     assert session.is_finished() is False
     assert session.resigned_color is None
+
+
+def test_game_session_marks_capture_for_audio_feedback() -> None:
+    session = GameSession(board=chess.Board("4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1"))
+
+    moved = session.handle_player_click(chess.E4)
+    assert moved is False
+
+    moved = session.handle_player_click(chess.D5)
+
+    assert moved is True
+    assert session.last_move_was_capture is True
+    assert session.last_move_was_castling is False
+
+
+def test_game_session_marks_castling_for_audio_feedback() -> None:
+    session = GameSession(board=chess.Board("4k2r/8/8/8/8/8/8/4K2R w Kk - 0 1"))
+
+    moved = session.handle_player_click(chess.E1)
+    assert moved is False
+
+    moved = session.handle_player_click(chess.G1)
+
+    assert moved is True
+    assert session.last_move_was_capture is False
+    assert session.last_move_was_castling is True

@@ -6,10 +6,13 @@ from pathlib import Path
 import chess
 import pygame
 
+from src.controllers.menu_state import MenuSelection
 from src.core import EloRating
 from src.models import GameSession
-from src.services import ComputerPlayer, SoundManager
+from src.services import ComputerPlayer, SoundEffect, SoundManager
 from src.views import ChessRenderer
+
+SOUNDS_DIRECTORY = Path(__file__).resolve().parent.parent.parent / "assets" / "sounds"
 
 
 class ChessApplication:
@@ -22,9 +25,7 @@ class ChessApplication:
         self.human_color = chess.WHITE
         self.computer_player = ComputerPlayer(self.selected_rating)
         self.ai_is_thinking = False
-        self.sound_manager = SoundManager(
-            move_sound_path=Path(__file__).resolve().parent.parent.parent / "assets" / "sounds" / "chess_move_wood.wav"
-        )
+        self.sound_manager = self._build_sound_manager()
         self.sound_manager.initialize()
 
     def run(self) -> None:
@@ -39,28 +40,47 @@ class ChessApplication:
             pygame.quit()
 
     def _run_menu(self) -> tuple[EloRating, chess.Color]:
-        selected_rating = self.selected_rating
-        selected_color = self.human_color
+        selection = MenuSelection(
+            rating=self.selected_rating,
+            color=self.human_color,
+        )
         while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self._shutdown()
-                if event.type == pygame.MOUSEMOTION and event.buttons[0]:
-                    rating = self.renderer.rating_from_slider_position(event.pos)
-                    if rating is not None:
-                        selected_rating = rating
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    color = self._color_from_position(event.pos)
-                    if color is not None:
-                        selected_color = color
-                        continue
-                    rating = self.renderer.rating_from_slider_position(event.pos)
-                    if rating is not None:
-                        selected_rating = rating
-                        continue
-                    if self.renderer.menu_start_button().rect.collidepoint(event.pos):
-                        return selected_rating, selected_color
-            self.renderer.draw_menu(selected_rating, selected_color)
+            if self._process_menu_events(selection):
+                return selection.rating, selection.color
+            self.renderer.draw_menu(selection.rating, selection.color)
+
+    def _process_menu_events(self, selection: MenuSelection) -> bool:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self._shutdown()
+            if event.type == pygame.MOUSEMOTION and event.buttons[0]:
+                self._update_menu_rating(selection, event.pos)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self._handle_menu_click(selection, event.pos):
+                    return True
+        return False
+
+    def _handle_menu_click(self, selection: MenuSelection, position: tuple[int, int]) -> bool:
+        color = self._color_from_position(position)
+        if color is not None:
+            self._update_menu_color(selection, color)
+            return False
+
+        rating = self.renderer.rating_from_slider_position(position)
+        if rating is not None:
+            selection.select_rating(rating)
+            return False
+
+        return self.renderer.menu_start_button().rect.collidepoint(position)
+
+    def _update_menu_rating(self, selection: MenuSelection, position: tuple[int, int]) -> None:
+        rating = self.renderer.rating_from_slider_position(position)
+        if rating is not None:
+            selection.select_rating(rating)
+
+    def _update_menu_color(self, selection: MenuSelection, color: chess.Color) -> None:
+        if selection.select_color(color):
+            self.sound_manager.play(SoundEffect.MENU_SELECT)
 
     def _run_game_loop(self) -> None:
         while True:
@@ -86,7 +106,6 @@ class ChessApplication:
         if action_button.rect.collidepoint(position):
             self._handle_primary_action()
             return
-
         if not self.session.is_human_turn(self.human_color):
             return
         if self.session.pending_promotion is not None:
@@ -99,7 +118,7 @@ class ChessApplication:
 
         try:
             if self.session.handle_player_click(square):
-                self.sound_manager.play_move()
+                self._play_last_move_sound()
         except ValueError as error:
             self.session.move_error_message = str(error)
 
@@ -113,7 +132,7 @@ class ChessApplication:
     def _handle_promotion_click(self, position: tuple[int, int]) -> None:
         promotion_piece = self.renderer.promotion_button_at(position)
         if promotion_piece is not None and self.session.choose_promotion(promotion_piece):
-            self.sound_manager.play_move()
+            self._play_last_move_sound()
 
     def _should_computer_play(self) -> bool:
         return (
@@ -133,7 +152,7 @@ class ChessApplication:
         try:
             move = self.computer_player.choose_move(self.session.board.copy(stack=True))
             self.session.apply_move(move)
-            self.sound_manager.play_move()
+            self._play_last_move_sound()
         except ValueError as error:
             self.session.move_error_message = str(error)
         finally:
@@ -149,6 +168,25 @@ class ChessApplication:
             if button.rect.collidepoint(position):
                 return button.color
         return None
+
+    def _play_last_move_sound(self) -> None:
+        if self.session.last_move_was_castling:
+            self.sound_manager.play(SoundEffect.CASTLING)
+            return
+        if self.session.last_move_was_capture:
+            self.sound_manager.play(SoundEffect.CAPTURE)
+            return
+        self.sound_manager.play(SoundEffect.MOVE)
+
+    def _build_sound_manager(self) -> SoundManager:
+        return SoundManager(
+            sound_paths={
+                SoundEffect.MOVE: SOUNDS_DIRECTORY / "chess_move_wood.wav",
+                SoundEffect.CAPTURE: SOUNDS_DIRECTORY / "chess_capture.wav",
+                SoundEffect.CASTLING: SOUNDS_DIRECTORY / "chess_castling.wav",
+                SoundEffect.MENU_SELECT: SOUNDS_DIRECTORY / "chess_menu_select.wav",
+            }
+        )
 
     def _shutdown(self) -> None:
         pygame.quit()

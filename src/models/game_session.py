@@ -21,6 +21,8 @@ class GameSession:
     legal_targets: list[chess.Square] = field(default_factory=list)
     pending_promotion: tuple[chess.Square, chess.Square] | None = None
     last_move: chess.Move | None = None
+    last_move_was_capture: bool = False
+    last_move_was_castling: bool = False
     move_error_message: str = ""
     resigned_color: chess.Color | None = None
 
@@ -29,6 +31,8 @@ class GameSession:
         self.board.reset()
         self.clear_selection()
         self.last_move = None
+        self.last_move_was_capture = False
+        self.last_move_was_castling = False
         self.move_error_message = ""
         self.resigned_color = None
 
@@ -103,6 +107,8 @@ class GameSession:
         """Push a legal move to the board and update UI-facing session state."""
         if move not in self.board.legal_moves:
             raise ValueError(f"Attempted to apply illegal move: {move.uci()}")
+        self.last_move_was_capture = self.board.is_capture(move)
+        self.last_move_was_castling = self.board.is_castling(move)
         self.board.push(move)
         self.last_move = move
         self.move_error_message = ""
