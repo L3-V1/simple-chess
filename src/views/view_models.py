@@ -24,3 +24,10 @@ class ColorButton:
 class ActionButton:
     label: str
     rect: pygame.Rect
+
+
+@dataclass(frozen=True)
+class TextInputField:
+    label: str
+    rect: pygame.Rect
+    placeholder: str

@@ -1,6 +1,6 @@
 import chess
 
-from src.controllers import MenuSelection
+from src.controllers import AppScreen, MenuSelection
 from src.core import EloRating
 
 
@@ -20,3 +20,9 @@ def test_menu_selection_ignores_same_color_selection() -> None:
 
     assert changed is False
     assert selection.color == chess.WHITE
+
+
+def test_app_screen_uses_stable_identifiers() -> None:
+    assert AppScreen.MENU.value == "menu"
+    assert AppScreen.GAME.value == "game"
+    assert AppScreen.TRAINING.value == "training"
