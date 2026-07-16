@@ -6,6 +6,7 @@ import chess
 
 from .game_session import GameSession
 from .opening_line import OpeningLine
+from .training_feedback import TrainingMoveFeedback
 
 
 @dataclass
@@ -15,11 +16,13 @@ class OpeningPracticeSession:
     opening: OpeningLine
     session: GameSession = field(default_factory=GameSession)
     current_move_index: int = 0
+    last_feedback: TrainingMoveFeedback = TrainingMoveFeedback.NONE
 
     def start(self) -> None:
         """Initialize practice and advance opponent moves when needed."""
         self.session.reset()
         self.current_move_index = 0
+        self.last_feedback = TrainingMoveFeedback.NONE
         self.session.move_error_message = ""
         self._play_opponent_responses()
 
@@ -41,6 +44,7 @@ class OpeningPracticeSession:
 
     def handle_player_click(self, square: chess.Square) -> bool:
         """Handle a click and advance only when the expected move is played."""
+        self.last_feedback = TrainingMoveFeedback.NONE
         if self.is_completed():
             self.session.move_error_message = "Essa sequência já foi concluída."
             return False
@@ -69,14 +73,17 @@ class OpeningPracticeSession:
 
     def choose_promotion(self, promotion_piece: chess.PieceType) -> bool:
         """Resolve promotion only when it matches the stored opening move."""
+        self.last_feedback = TrainingMoveFeedback.NONE
         expected_move = self._expected_player_move()
         if expected_move is None or self.session.pending_promotion is None:
             return False
         if expected_move.promotion != promotion_piece:
             self.session.move_error_message = "Essa promoção não corresponde à abertura treinada."
+            self.last_feedback = TrainingMoveFeedback.INCORRECT
             return False
         self.session.apply_move(expected_move)
         self.current_move_index += 1
+        self.last_feedback = TrainingMoveFeedback.CORRECT
         self._play_opponent_responses()
         return True
 
@@ -95,6 +102,7 @@ class OpeningPracticeSession:
             return False
         if expected_move not in candidate_moves:
             self.session.move_error_message = "Lance incorreto para a abertura treinada. Tente novamente."
+            self.last_feedback = TrainingMoveFeedback.INCORRECT
             return False
         if len(candidate_moves) > 1:
             self.session.pending_promotion = (selected_square, target_square)
@@ -103,6 +111,7 @@ class OpeningPracticeSession:
 
         self.session.apply_move(expected_move)
         self.current_move_index += 1
+        self.last_feedback = TrainingMoveFeedback.CORRECT
         self._play_opponent_responses()
         return True
 

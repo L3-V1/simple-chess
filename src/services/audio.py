@@ -14,6 +14,8 @@ class SoundEffect(str, Enum):
     CAPTURE = "capture"
     CASTLING = "castling"
     MENU_SELECT = "menu_select"
+    TRAINING_CORRECT = "training_correct"
+    TRAINING_INCORRECT = "training_incorrect"
 
 
 @dataclass
@@ -68,5 +70,7 @@ class SoundManager:
             SoundEffect.CAPTURE: 0.65,
             SoundEffect.CASTLING: 0.60,
             SoundEffect.MENU_SELECT: 0.45,
+            SoundEffect.TRAINING_CORRECT: 0.50,
+            SoundEffect.TRAINING_INCORRECT: 0.55,
         }
         return volumes[effect]

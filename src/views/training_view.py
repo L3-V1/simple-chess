@@ -26,6 +26,10 @@ from .view_models import ActionButton, ColorButton, TextInputField
 class TrainingView:
     """Render the opening training library and practice screens."""
 
+    _OPENING_ICON_WIDTH = 34
+    _OPENING_TEXT_LEFT = 12 + _OPENING_ICON_WIDTH + 10
+    _OPENING_TEXT_RIGHT = 14
+
     def __init__(self, assets: RenderAssets, geometry: BoardGeometry) -> None:
         self._assets = assets
         self._geometry = geometry
@@ -151,17 +155,11 @@ class TrainingView:
         title = self._render_text(self._assets.body_font, "Aberturas cadastradas")
         self._assets.screen.blit(title, (472, 156))
         for opening, rect in self.opening_list_rects(runtime.openings):
-            is_selected = opening.name == runtime.selected_opening_name
-            fill_color = self._assets.palette.accent if is_selected else self._assets.palette.panel
-            pygame.draw.rect(self._assets.screen, fill_color, rect, border_radius=12)
-            pygame.draw.rect(self._assets.screen, self._assets.palette.light_square, rect, width=2, border_radius=12)
-            name_surface = self._render_text(self._assets.small_font, opening.name)
-            info_surface = self._render_text(
-                self._assets.small_font,
-                f"{opening.color_label}: {opening.format_moves()}",
+            self._draw_opening_row(
+                opening=opening,
+                rect=rect,
+                is_selected=opening.name == runtime.selected_opening_name,
             )
-            self._assets.screen.blit(name_surface, (rect.left + 12, rect.top + 8))
-            self._assets.screen.blit(info_surface, (rect.left + 12, rect.top + 28))
 
         if not runtime.openings:
             empty_surface = self._render_text(self._assets.small_font, "Nenhuma abertura cadastrada ainda.")
@@ -193,6 +191,62 @@ class TrainingView:
         marker_rect = marker_surface.get_rect(midleft=(button.rect.left + 10, button.rect.centery))
         self._assets.screen.blit(marker_surface, marker_rect)
 
+    def _draw_opening_row(
+        self,
+        opening: OpeningLine,
+        rect: pygame.Rect,
+        is_selected: bool,
+    ) -> None:
+        fill_color = self._assets.palette.accent if is_selected else self._assets.palette.panel
+        pygame.draw.rect(self._assets.screen, fill_color, rect, border_radius=12)
+        pygame.draw.rect(self._assets.screen, self._assets.palette.light_square, rect, width=2, border_radius=12)
+        if is_selected:
+            self._draw_selected_opening_icon(rect)
+        text_width = rect.width - self._OPENING_TEXT_LEFT - self._OPENING_TEXT_RIGHT
+        name_surface = self._render_text(
+            self._assets.small_font,
+            self._fitted_opening_text(opening.name, text_width),
+        )
+        info_surface = self._render_text(
+            self._assets.small_font,
+            self._fitted_opening_text(f"{opening.color_label}: {opening.format_moves()}", text_width),
+        )
+        self._assets.screen.blit(name_surface, (rect.left + self._OPENING_TEXT_LEFT, rect.top + 8))
+        self._assets.screen.blit(info_surface, (rect.left + self._OPENING_TEXT_LEFT, rect.top + 28))
+
+    def _draw_selected_opening_icon(self, rect: pygame.Rect) -> None:
+        icon_rect = pygame.Rect(rect.left + 12, rect.top + 10, self._OPENING_ICON_WIDTH, 30)
+        left_page = pygame.Rect(icon_rect.left + 2, icon_rect.top + 3, 14, 22)
+        right_page = pygame.Rect(icon_rect.left + 16, icon_rect.top + 3, 14, 22)
+        page_color = (247, 239, 214)
+        outline_color = (96, 65, 38)
+
+        pygame.draw.rect(self._assets.screen, page_color, left_page, border_radius=4)
+        pygame.draw.rect(self._assets.screen, page_color, right_page, border_radius=4)
+        pygame.draw.rect(self._assets.screen, outline_color, left_page, width=2, border_radius=4)
+        pygame.draw.rect(self._assets.screen, outline_color, right_page, width=2, border_radius=4)
+        pygame.draw.line(
+            self._assets.screen,
+            outline_color,
+            (icon_rect.centerx, icon_rect.top + 4),
+            (icon_rect.centerx, icon_rect.bottom - 4),
+            2,
+        )
+        pygame.draw.line(
+            self._assets.screen,
+            outline_color,
+            (left_page.left + 4, left_page.top + 8),
+            (left_page.right - 4, left_page.top + 8),
+            2,
+        )
+        pygame.draw.line(
+            self._assets.screen,
+            outline_color,
+            (right_page.left + 4, right_page.top + 8),
+            (right_page.right - 4, right_page.top + 8),
+            2,
+        )
+
     def _draw_input_field(self, field: TextInputField, value: str, is_active: bool) -> None:
         label_surface = self._render_text(self._assets.small_font, field.label)
         self._assets.screen.blit(label_surface, (field.rect.left, field.rect.top - 26))
@@ -212,6 +266,9 @@ class TrainingView:
             return
         placeholder = self._render_text(self._assets.small_font, field.placeholder, (120, 140, 128))
         self._assets.screen.blit(placeholder, (field.rect.left + 10, field.rect.top + 10))
+
+    def _fitted_opening_text(self, text: str, max_width: int) -> str:
+        return self._assets.text_renderer.fit_to_width(self._assets.small_font, text, max_width)
 
     def _draw_practice_side_panel(self, runtime: TrainingRuntime) -> None:
         practice = runtime.practice_session

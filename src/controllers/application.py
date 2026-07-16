@@ -9,7 +9,7 @@ import pygame
 from src.controllers.menu_state import MenuSelection
 from src.controllers.screen_state import AppScreen
 from src.core import EloRating
-from src.models import GameRuntime, TrainingRuntime
+from src.models import GameRuntime, TrainingMoveFeedback, TrainingRuntime
 from src.services import OpeningCatalog, SoundEffect, SoundManager
 from src.views import ChessRenderer
 
@@ -252,7 +252,8 @@ class ChessApplication:
 
         for opening, rect in self.renderer.training_opening_rows(self.training_runtime):
             if rect.collidepoint(position):
-                self.training_runtime.select_opening(opening.name)
+                if self.training_runtime.select_opening(opening.name):
+                    self.sound_manager.play(SoundEffect.MENU_SELECT)
                 return
 
         self.training_runtime.active_input = None
@@ -315,16 +316,18 @@ class ChessApplication:
                 square = self.renderer.training_pixel_to_square(event.pos, practice.player_color)
                 if square is None:
                     continue
-                if practice.handle_player_click(square):
-                    self._play_training_move_sound()
+                moved = practice.handle_player_click(square)
+                self._play_training_attempt_sound(moved)
 
     def _handle_training_promotion_click(self, position: tuple[int, int]) -> None:
         practice = self.training_runtime.practice_session
         if practice is None:
             return
         promotion_piece = self.renderer.training_promotion_button_at(position)
-        if promotion_piece is not None and practice.choose_promotion(promotion_piece):
-            self._play_training_move_sound()
+        if promotion_piece is None:
+            return
+        moved = practice.choose_promotion(promotion_piece)
+        self._play_training_attempt_sound(moved)
 
     def _training_color_from_position(self, position: tuple[int, int]) -> chess.Color | None:
         for button in self.renderer.training_color_buttons():
@@ -353,6 +356,17 @@ class ChessApplication:
             return
         self.sound_manager.play(SoundEffect.MOVE)
 
+    def _play_training_attempt_sound(self, moved: bool) -> None:
+        practice = self.training_runtime.practice_session
+        if practice is None:
+            return
+        if practice.last_feedback == TrainingMoveFeedback.INCORRECT:
+            self.sound_manager.play(SoundEffect.TRAINING_INCORRECT)
+            return
+        if moved and practice.last_feedback == TrainingMoveFeedback.CORRECT:
+            self.sound_manager.play(SoundEffect.TRAINING_CORRECT)
+            self._play_training_move_sound()
+
     def _refresh_openings(self) -> None:
         openings = self.opening_catalog.load_openings()
         self.training_runtime.set_openings(openings)
@@ -375,6 +389,8 @@ class ChessApplication:
                 SoundEffect.CAPTURE: SOUNDS_DIRECTORY / "chess_capture.wav",
                 SoundEffect.CASTLING: SOUNDS_DIRECTORY / "chess_castling.wav",
                 SoundEffect.MENU_SELECT: SOUNDS_DIRECTORY / "chess_menu_select.wav",
+                SoundEffect.TRAINING_CORRECT: SOUNDS_DIRECTORY / "training_correct.wav",
+                SoundEffect.TRAINING_INCORRECT: SOUNDS_DIRECTORY / "training_incorrect.wav",
             }
         )
 

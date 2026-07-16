@@ -68,6 +68,22 @@ class TextRenderer:
 
         return current_top
 
+    def fit_to_width(self, font: UiFont, text: str, max_width: int) -> str:
+        """Return text truncated with ellipsis when it exceeds the allowed width."""
+        if max_width <= 0:
+            return ""
+        if font.measure_width(text) <= max_width:
+            return text
+
+        ellipsis = "..."
+        if font.measure_width(ellipsis) > max_width:
+            return ""
+
+        trimmed_text = text
+        while trimmed_text and font.measure_width(f"{trimmed_text}{ellipsis}") > max_width:
+            trimmed_text = trimmed_text[:-1]
+        return f"{trimmed_text.rstrip()}{ellipsis}"
+
     def _load_font(self, size: int, bold: bool = False) -> UiFont:
         render_scale = 2
         font_path = self._find_font_path()

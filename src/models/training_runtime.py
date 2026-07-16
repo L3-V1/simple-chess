@@ -30,10 +30,12 @@ class TrainingRuntime:
         if self.selected_opening_name not in {opening.name for opening in openings}:
             self.selected_opening_name = openings[0].name
 
-    def select_opening(self, opening_name: str) -> None:
-        """Select an opening by name."""
+    def select_opening(self, opening_name: str) -> bool:
+        """Select an opening by name and report whether the selection changed."""
+        selection_changed = self.selected_opening_name != opening_name
         self.selected_opening_name = opening_name
         self.feedback_message = ""
+        return selection_changed
 
     def selected_opening(self) -> OpeningLine | None:
         """Return the currently selected opening, if any."""

@@ -1,6 +1,6 @@
 import chess
 
-from src.models import OpeningLine, OpeningPracticeSession
+from src.models import OpeningLine, OpeningPracticeSession, TrainingMoveFeedback
 
 
 def test_opening_practice_rejects_wrong_player_move() -> None:
@@ -20,6 +20,7 @@ def test_opening_practice_rejects_wrong_player_move() -> None:
     assert moved is False
     assert "abertura treinada" in practice.session.move_error_message.lower()
     assert practice.current_move_index == 0
+    assert practice.last_feedback == TrainingMoveFeedback.INCORRECT
 
 
 def test_opening_practice_advances_opponent_moves_automatically_for_black() -> None:
@@ -43,3 +44,4 @@ def test_opening_practice_advances_opponent_moves_automatically_for_black() -> N
     assert moved is True
     assert practice.current_move_index == 3
     assert practice.session.board.turn == chess.BLACK
+    assert practice.last_feedback == TrainingMoveFeedback.CORRECT
