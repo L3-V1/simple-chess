@@ -21,6 +21,8 @@ class UiFont:
 class TextRenderer:
     def __init__(self, default_color: tuple[int, int, int]) -> None:
         self._default_color = default_color
+        self._render_cache: dict[tuple[int, str, tuple[int, int, int]], pygame.Surface] = {}
+        self._fit_cache: dict[tuple[int, str, int], str] = {}
         self.title_font = self._load_font(size=30, bold=True)
         self.body_font = self._load_font(size=24)
         self.small_font = self._load_font(size=20)
@@ -31,9 +33,17 @@ class TextRenderer:
         text: str,
         color: tuple[int, int, int] | None = None,
     ) -> pygame.Surface:
-        rendered_surface, _ = font.font.render(text, fgcolor=color or self._default_color)
+        resolved_color = color or self._default_color
+        cache_key = (id(font), text, resolved_color)
+        cached_surface = self._render_cache.get(cache_key)
+        if cached_surface is not None:
+            return cached_surface
+
+        rendered_surface, _ = font.font.render(text, fgcolor=resolved_color)
         final_surface = self._downsample_surface(rendered_surface, font.render_scale)
-        return final_surface.convert_alpha() if pygame.display.get_surface() is not None else final_surface
+        cached_surface = final_surface.convert_alpha() if pygame.display.get_surface() is not None else final_surface
+        self._render_cache[cache_key] = cached_surface
+        return cached_surface
 
     def wrap(
         self,
@@ -70,19 +80,34 @@ class TextRenderer:
 
     def fit_to_width(self, font: UiFont, text: str, max_width: int) -> str:
         """Return text truncated with ellipsis when it exceeds the allowed width."""
+        cache_key = (id(font), text, max_width)
+        cached_text = self._fit_cache.get(cache_key)
+        if cached_text is not None:
+            return cached_text
         if max_width <= 0:
             return ""
         if font.measure_width(text) <= max_width:
+            self._fit_cache[cache_key] = text
             return text
 
         ellipsis = "..."
         if font.measure_width(ellipsis) > max_width:
             return ""
 
-        trimmed_text = text
-        while trimmed_text and font.measure_width(f"{trimmed_text}{ellipsis}") > max_width:
-            trimmed_text = trimmed_text[:-1]
-        return f"{trimmed_text.rstrip()}{ellipsis}"
+        left = 0
+        right = len(text)
+        fitted_text = ""
+        while left <= right:
+            middle = (left + right) // 2
+            candidate = f"{text[:middle].rstrip()}{ellipsis}"
+            if font.measure_width(candidate) <= max_width:
+                fitted_text = candidate
+                left = middle + 1
+            else:
+                right = middle - 1
+
+        self._fit_cache[cache_key] = fitted_text
+        return fitted_text
 
     def _load_font(self, size: int, bold: bool = False) -> UiFont:
         render_scale = 2

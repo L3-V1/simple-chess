@@ -52,6 +52,32 @@ class OpeningCatalog:
         self._save_openings(openings)
         return opening
 
+    def add_opening_from_moves(
+        self,
+        base_name: str,
+        player_color: chess.Color,
+        moves_uci: tuple[str, ...],
+    ) -> OpeningLine:
+        """Persist a new opening from an already validated move sequence."""
+        cleaned_name = base_name.strip()
+        if not cleaned_name:
+            raise ValueError("Informe um nome para a abertura.")
+        if not moves_uci:
+            raise ValueError("Jogue ao menos um lance antes de salvar a abertura.")
+
+        openings = self.load_openings()
+        opening = OpeningLine(
+            name=self._build_unique_name(cleaned_name, openings),
+            player_color=player_color,
+            moves_uci=moves_uci,
+        )
+        if not self._line_contains_player_move(opening):
+            raise ValueError("Cadastre ao menos um lance do lado que será treinado.")
+
+        openings.append(opening)
+        self._save_openings(openings)
+        return opening
+
     def delete_opening(self, name: str) -> None:
         """Remove a stored opening by name."""
         openings = self.load_openings()
@@ -59,6 +85,33 @@ class OpeningCatalog:
         if len(filtered_openings) == len(openings):
             raise ValueError("Abertura não encontrada para exclusão.")
         self._save_openings(filtered_openings)
+
+    def rename_opening(self, current_name: str, new_name: str) -> OpeningLine:
+        """Rename an existing opening while preserving its move sequence."""
+        cleaned_name = new_name.strip()
+        if not cleaned_name:
+            raise ValueError("Informe um nome para a abertura.")
+
+        openings = self.load_openings()
+        opening_to_rename = self._find_opening(openings, current_name)
+        if opening_to_rename is None:
+            raise ValueError("Abertura não encontrada para edição.")
+
+        if opening_to_rename.name.lower() != cleaned_name.lower():
+            if any(opening.name.lower() == cleaned_name.lower() for opening in openings):
+                raise ValueError("Já existe uma abertura cadastrada com esse nome.")
+
+        updated_opening = OpeningLine(
+            name=cleaned_name,
+            player_color=opening_to_rename.player_color,
+            moves_uci=opening_to_rename.moves_uci,
+        )
+        updated_openings = [
+            updated_opening if opening.name == current_name else opening
+            for opening in openings
+        ]
+        self._save_openings(updated_openings)
+        return updated_opening
 
     def _parse_moves(self, moves_text: str) -> tuple[str, ...]:
         normalized_text = re.sub(r"\d+\.(\.\.)?", " ", moves_text)
@@ -84,6 +137,24 @@ class OpeningCatalog:
     def _line_contains_player_move(self, opening: OpeningLine) -> bool:
         player_starts_at = 0 if opening.player_color == chess.WHITE else 1
         return player_starts_at < len(opening.moves_uci)
+
+    def _build_unique_name(self, base_name: str, openings: list[OpeningLine]) -> str:
+        existing_names = {opening.name.lower() for opening in openings}
+        if base_name.lower() not in existing_names:
+            return base_name
+
+        suffix = 2
+        while True:
+            candidate = f"{base_name} {suffix}"
+            if candidate.lower() not in existing_names:
+                return candidate
+            suffix += 1
+
+    def _find_opening(self, openings: list[OpeningLine], name: str) -> OpeningLine | None:
+        for opening in openings:
+            if opening.name == name:
+                return opening
+        return None
 
     def _save_openings(self, openings: list[OpeningLine]) -> None:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)

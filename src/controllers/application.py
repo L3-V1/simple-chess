@@ -132,6 +132,9 @@ class ChessApplication:
         if action_button.rect.collidepoint(position):
             self._handle_primary_action()
             return
+        if self.renderer.game_save_opening_button().rect.collidepoint(position):
+            self._save_current_game_as_opening()
+            return
         if not self.runtime.session.is_human_turn(self.runtime.human_color):
             return
         if self.runtime.session.pending_promotion is not None:
@@ -153,6 +156,30 @@ class ChessApplication:
             self.current_screen = AppScreen.MENU
             return
         self.runtime.session.resign(self.runtime.human_color)
+
+    def _save_current_game_as_opening(self) -> None:
+        if not self.runtime.session.has_moves():
+            self.runtime.session.move_error_message = "Jogue ao menos um lance antes de salvar a abertura."
+            return
+
+        try:
+            opening = self.opening_catalog.add_opening_from_moves(
+                base_name=self._build_saved_opening_name(),
+                player_color=self.runtime.human_color,
+                moves_uci=tuple(move.uci() for move in self.runtime.session.board.move_stack),
+            )
+        except ValueError as error:
+            self.runtime.session.move_error_message = str(error)
+            return
+
+        self._refresh_openings()
+        self.training_runtime.select_opening(opening.name)
+        self.runtime.session.move_error_message = "Linha salva no modo treino com sucesso."
+
+    def _build_saved_opening_name(self) -> str:
+        side_label = "Brancas" if self.runtime.human_color == chess.WHITE else "Pretas"
+        move_count = len(self.runtime.session.board.move_stack)
+        return f"Linha salva {side_label} {move_count}"
 
     def _handle_promotion_click(self, position: tuple[int, int]) -> None:
         promotion_piece = self.renderer.promotion_button_at(position)
@@ -234,6 +261,9 @@ class ChessApplication:
         if self.renderer.training_delete_button().rect.collidepoint(position):
             self._delete_selected_opening()
             return
+        if self.renderer.training_rename_button().rect.collidepoint(position):
+            self._edit_selected_opening_name()
+            return
         if self.renderer.training_start_button().rect.collidepoint(position):
             self._start_selected_opening_practice()
             return
@@ -273,6 +303,30 @@ class ChessApplication:
         self.training_runtime.select_opening(opening.name)
         self.training_runtime.feedback_message = "Abertura salva com sucesso."
         self.training_runtime.clear_form()
+
+    def _edit_selected_opening_name(self) -> None:
+        opening = self.training_runtime.selected_opening()
+        if opening is None:
+            self.training_runtime.feedback_message = "Selecione uma abertura para editar."
+            return
+
+        if not self.training_runtime.is_editing_name:
+            self.training_runtime.begin_name_edit(opening)
+            return
+
+        try:
+            updated_opening = self.opening_catalog.rename_opening(
+                current_name=opening.name,
+                new_name=self.training_runtime.opening_name_input,
+            )
+        except ValueError as error:
+            self.training_runtime.feedback_message = str(error)
+            return
+
+        self._refresh_openings()
+        self.training_runtime.select_opening(updated_opening.name)
+        self.training_runtime.feedback_message = "Nome da abertura atualizado com sucesso."
+        self.training_runtime.finish_name_edit()
 
     def _start_selected_opening_practice(self) -> None:
         opening = self.training_runtime.selected_opening()

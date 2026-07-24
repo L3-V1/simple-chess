@@ -9,6 +9,8 @@ from src.views.layout import (
     build_menu_training_button,
     build_primary_action_button,
     build_rating_slider,
+    build_save_opening_button,
+    build_training_rename_button,
 )
 from src.views.menu_view import MenuView
 from src.views.move_history import format_move_history, normalize_move_notation
@@ -38,6 +40,8 @@ __all__ = [
     "build_menu_training_button",
     "build_primary_action_button",
     "build_rating_slider",
+    "build_save_opening_button",
+    "build_training_rename_button",
     "format_move_history",
     "normalize_move_notation",
 ]

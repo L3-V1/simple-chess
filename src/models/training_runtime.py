@@ -20,6 +20,7 @@ class TrainingRuntime:
     active_input: str | None = None
     feedback_message: str = ""
     practice_session: OpeningPracticeSession | None = None
+    is_editing_name: bool = False
 
     def set_openings(self, openings: list[OpeningLine]) -> None:
         """Replace the stored opening list and keep a valid selection."""
@@ -34,6 +35,8 @@ class TrainingRuntime:
         """Select an opening by name and report whether the selection changed."""
         selection_changed = self.selected_opening_name != opening_name
         self.selected_opening_name = opening_name
+        self.opening_name_input = ""
+        self.is_editing_name = False
         self.feedback_message = ""
         return selection_changed
 
@@ -50,6 +53,20 @@ class TrainingRuntime:
         self.opening_moves_input = ""
         self.opening_color = chess.WHITE
         self.active_input = None
+        self.is_editing_name = False
+
+    def begin_name_edit(self, opening: OpeningLine) -> None:
+        """Preload the selected opening name into the edit form."""
+        self.opening_name_input = opening.name
+        self.active_input = "name"
+        self.is_editing_name = True
+        self.feedback_message = "Edite o nome e clique novamente em Editar nome."
+
+    def finish_name_edit(self) -> None:
+        """Leave name editing mode and clear the name input field."""
+        self.opening_name_input = ""
+        self.active_input = None
+        self.is_editing_name = False
 
     def begin_practice(self, opening: OpeningLine) -> None:
         """Start a practice session for the selected opening."""

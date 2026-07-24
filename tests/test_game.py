@@ -77,3 +77,13 @@ def test_game_session_marks_castling_for_audio_feedback() -> None:
     assert moved is True
     assert session.last_move_was_capture is False
     assert session.last_move_was_castling is True
+
+
+def test_game_session_reports_when_moves_have_been_played() -> None:
+    session = GameSession()
+
+    assert session.has_moves() is False
+    session.board.push_san("e4")
+
+    assert session.has_moves() is True
+    assert session.export_san_moves() == "e4"

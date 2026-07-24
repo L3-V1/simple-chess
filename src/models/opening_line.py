@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cached_property
 
 import chess
 
@@ -38,6 +39,11 @@ class OpeningLine:
 
     def format_moves(self) -> str:
         """Return the opening moves formatted in SAN notation."""
+        return self.formatted_moves
+
+    @cached_property
+    def formatted_moves(self) -> str:
+        """Cache the SAN representation to avoid recomputing it every frame."""
         board = chess.Board()
         san_moves: list[str] = []
         for move_uci in self.moves_uci:

@@ -15,6 +15,7 @@ from .layout import (
     build_training_library_back_button,
     build_training_moves_input,
     build_training_name_input,
+    build_training_rename_button,
     build_training_save_button,
     build_training_start_button,
 )
@@ -34,6 +35,19 @@ class TrainingView:
         self._assets = assets
         self._geometry = geometry
         self._board_view = BoardView(assets, geometry)
+        self._name_input = build_training_name_input()
+        self._moves_input = build_training_moves_input()
+        self._color_buttons = build_training_color_buttons()
+        self._save_opening_button = build_training_save_button()
+        self._start_practice_button = build_training_start_button()
+        self._delete_opening_button = build_training_delete_button()
+        self._rename_opening_button = build_training_rename_button()
+        self._library_back_button = build_training_library_back_button()
+        self._opening_row_rects = self._build_opening_row_rects()
+        self._selected_color_markers = {
+            chess.WHITE: self._build_selected_color_marker(chess.WHITE),
+            chess.BLACK: self._build_selected_color_marker(chess.BLACK),
+        }
 
     def draw(self, runtime: TrainingRuntime) -> None:
         """Render the full training screen for the current mode."""
@@ -43,25 +57,28 @@ class TrainingView:
         self._draw_practice(runtime)
 
     def name_input(self) -> TextInputField:
-        return build_training_name_input()
+        return self._name_input
 
     def moves_input(self) -> TextInputField:
-        return build_training_moves_input()
+        return self._moves_input
 
     def color_buttons(self) -> list[ColorButton]:
-        return build_training_color_buttons()
+        return self._color_buttons
 
     def save_opening_button(self) -> ActionButton:
-        return build_training_save_button()
+        return self._save_opening_button
 
     def start_practice_button(self) -> ActionButton:
-        return build_training_start_button()
+        return self._start_practice_button
 
     def delete_opening_button(self) -> ActionButton:
-        return build_training_delete_button()
+        return self._delete_opening_button
+
+    def rename_opening_button(self) -> ActionButton:
+        return self._rename_opening_button
 
     def library_back_button(self) -> ActionButton:
-        return build_training_library_back_button()
+        return self._library_back_button
 
     def practice_back_button(self) -> ActionButton:
         return build_training_back_button(self._assets.display_settings)
@@ -70,16 +87,10 @@ class TrainingView:
         return build_training_finish_button(self._assets.display_settings)
 
     def opening_list_rects(self, openings: list[OpeningLine]) -> list[tuple[OpeningLine, pygame.Rect]]:
-        rects: list[tuple[OpeningLine, pygame.Rect]] = []
-        left = 470
-        top = 190
-        width = 340
-        height = 52
-        gap = 12
-        for index, opening in enumerate(openings[:5]):
-            rect = pygame.Rect(left, top + index * (height + gap), width, height)
-            rects.append((opening, rect))
-        return rects
+        return [
+            (opening, rect)
+            for opening, rect in zip(openings[: len(self._opening_row_rects)], self._opening_row_rects)
+        ]
 
     def practice_board_square(
         self,
@@ -164,6 +175,7 @@ class TrainingView:
         if not runtime.openings:
             empty_surface = self._render_text(self._assets.small_font, "Nenhuma abertura cadastrada ainda.")
             self._assets.screen.blit(empty_surface, (472, 220))
+        self._draw_button(self.rename_opening_button(), self._assets.palette.panel)
         self._draw_button(self.delete_opening_button(), self._assets.palette.danger)
         self._draw_button(self.start_practice_button(), self._assets.palette.accent)
 
@@ -183,11 +195,7 @@ class TrainingView:
             self._assets.screen.blit(label_surface, label_surface.get_rect(center=label_rect.center))
 
     def _draw_selected_color_icon(self, button: ColorButton) -> None:
-        marker_piece = chess.Piece(chess.PAWN, button.color)
-        marker_surface = pygame.transform.smoothscale(
-            self._assets.piece_factory.get_sprite(marker_piece),
-            (24, 24),
-        )
+        marker_surface = self._selected_color_markers[button.color]
         marker_rect = marker_surface.get_rect(midleft=(button.rect.left + 10, button.rect.centery))
         self._assets.screen.blit(marker_surface, marker_rect)
 
@@ -209,7 +217,7 @@ class TrainingView:
         )
         info_surface = self._render_text(
             self._assets.small_font,
-            self._fitted_opening_text(f"{opening.color_label}: {opening.format_moves()}", text_width),
+            self._fitted_opening_text(f"{opening.color_label}: {opening.formatted_moves}", text_width),
         )
         self._assets.screen.blit(name_surface, (rect.left + self._OPENING_TEXT_LEFT, rect.top + 8))
         self._assets.screen.blit(info_surface, (rect.left + self._OPENING_TEXT_LEFT, rect.top + 28))
@@ -317,7 +325,7 @@ class TrainingView:
         sequence_title = self._render_text(self._assets.small_font, "Linha cadastrada")
         self._assets.screen.blit(sequence_title, (left, top))
         self._draw_wrapped_text(
-            text=practice.opening.format_moves(),
+            text=practice.opening.formatted_moves,
             font=self._assets.small_font,
             color=self._assets.palette.text,
             left=left,
@@ -406,3 +414,21 @@ class TrainingView:
         color: tuple[int, int, int] | None = None,
     ) -> pygame.Surface:
         return self._assets.text_renderer.render(font, text, color)
+
+    def _build_opening_row_rects(self) -> list[pygame.Rect]:
+        left = 470
+        top = 190
+        width = 340
+        height = 52
+        gap = 12
+        return [
+            pygame.Rect(left, top + index * (height + gap), width, height)
+            for index in range(5)
+        ]
+
+    def _build_selected_color_marker(self, color: chess.Color) -> pygame.Surface:
+        marker_piece = chess.Piece(chess.PAWN, color)
+        return pygame.transform.smoothscale(
+            self._assets.piece_factory.get_sprite(marker_piece),
+            (24, 24),
+        )

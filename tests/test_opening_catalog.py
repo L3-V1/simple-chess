@@ -49,3 +49,38 @@ def test_opening_catalog_deletes_opening_lines(tmp_path: Path) -> None:
     loaded = catalog.load_openings()
 
     assert loaded == []
+
+
+def test_opening_catalog_saves_opening_from_existing_moves_with_unique_name(tmp_path: Path) -> None:
+    catalog = OpeningCatalog(tmp_path / "openings.json")
+
+    first_opening = catalog.add_opening_from_moves(
+        base_name="Linha salva Brancas 4",
+        player_color=chess.WHITE,
+        moves_uci=("e2e4", "e7e5", "g1f3", "b8c6"),
+    )
+    second_opening = catalog.add_opening_from_moves(
+        base_name="Linha salva Brancas 4",
+        player_color=chess.WHITE,
+        moves_uci=("d2d4", "d7d5"),
+    )
+
+    assert first_opening.name == "Linha salva Brancas 4"
+    assert second_opening.name == "Linha salva Brancas 4 2"
+    assert second_opening.moves_uci == ("d2d4", "d7d5")
+
+
+def test_opening_catalog_renames_existing_opening(tmp_path: Path) -> None:
+    catalog = OpeningCatalog(tmp_path / "openings.json")
+    catalog.add_opening(
+        name="Italiana",
+        player_color=chess.WHITE,
+        moves_text="1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5",
+    )
+
+    renamed_opening = catalog.rename_opening("Italiana", "Jogo Italiano")
+    loaded = catalog.load_openings()
+
+    assert renamed_opening.name == "Jogo Italiano"
+    assert loaded[0].name == "Jogo Italiano"
+    assert loaded[0].moves_uci == ("e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5")

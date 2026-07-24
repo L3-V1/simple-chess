@@ -8,7 +8,7 @@ from src.models import GameSession, PROMOTION_PIECES
 
 from .board_geometry import BoardGeometry
 from .board_view import BoardView
-from .layout import build_primary_action_button
+from .layout import build_primary_action_button, build_save_opening_button
 from .move_history import format_move_history
 from .render_assets import RenderAssets
 from .text_renderer import UiFont
@@ -68,6 +68,13 @@ class GameView:
             is_finished=session.is_finished(),
         )
 
+    def save_opening_button(self) -> ActionButton:
+        """Return the button that saves the current line for training."""
+        return build_save_opening_button(
+            display_settings=self._assets.display_settings,
+            board_size=self._assets.display_settings.board_size,
+        )
+
     def _draw_side_panel(
         self,
         session: GameSession,
@@ -80,6 +87,7 @@ class GameView:
         top = self._draw_panel_header(left, selected_rating, human_color, ai_is_thinking)
         top = self._draw_panel_messages(session, left, top)
         self._draw_move_history(session, left, top + 6)
+        self._draw_action_button(self.save_opening_button(), self._assets.palette.panel)
         self._draw_action_button(
             self.primary_action_button(session),
             self._assets.palette.accent if session.is_finished() else self._assets.palette.danger,

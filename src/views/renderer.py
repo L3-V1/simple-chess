@@ -86,6 +86,9 @@ class ChessRenderer:
     def primary_action_button(self, session: GameSession) -> ActionButton:
         return self._game_view.primary_action_button(session)
 
+    def game_save_opening_button(self) -> ActionButton:
+        return self._game_view.save_opening_button()
+
     def training_name_input(self) -> TextInputField:
         return self._training_view.name_input()
 
@@ -103,6 +106,9 @@ class ChessRenderer:
 
     def training_delete_button(self) -> ActionButton:
         return self._training_view.delete_opening_button()
+
+    def training_rename_button(self) -> ActionButton:
+        return self._training_view.rename_opening_button()
 
     def training_library_back_button(self) -> ActionButton:
         return self._training_view.library_back_button()

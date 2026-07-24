@@ -26,6 +26,10 @@ class GameSession:
     move_error_message: str = ""
     resigned_color: chess.Color | None = None
 
+    def has_moves(self) -> bool:
+        """Return whether the current game already contains played moves."""
+        return bool(self.board.move_stack)
+
     def reset(self) -> None:
         """Reset the match state to a new game."""
         self.board.reset()
@@ -129,6 +133,17 @@ class GameSession:
     def is_finished(self) -> bool:
         """Return whether the game has ended by rules or resignation."""
         return self.resigned_color is not None or self.board.is_game_over(claim_draw=True)
+
+    def export_san_moves(self) -> str:
+        """Return the played move sequence formatted in SAN notation."""
+        replay_board = chess.Board()
+        san_moves: list[str] = []
+
+        for move in self.board.move_stack:
+            san_moves.append(replay_board.san(move))
+            replay_board.push(move)
+
+        return " ".join(san_moves)
 
     def status_message(self) -> str:
         """Build the main status message shown in the side panel."""

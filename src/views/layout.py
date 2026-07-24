@@ -61,6 +61,22 @@ def build_primary_action_button(
     return ActionButton(label=label, rect=rect)
 
 
+def build_save_opening_button(
+    display_settings: DisplaySettings,
+    board_size: int,
+) -> ActionButton:
+    """Create the in-game button that saves the current line for training."""
+    return ActionButton(
+        label="Salvar para treino",
+        rect=pygame.Rect(
+            board_size + 22,
+            display_settings.window_height - 132,
+            display_settings.side_panel_width - 44,
+            46,
+        ),
+    )
+
+
 def build_training_back_button(display_settings: DisplaySettings) -> ActionButton:
     """Create the button that returns from training to the main menu."""
     left = display_settings.board_size + 22
@@ -117,7 +133,15 @@ def build_training_delete_button() -> ActionButton:
     """Create the delete opening button."""
     return ActionButton(
         label="Excluir abertura",
-        rect=pygame.Rect(382, 560, 200, 46),
+        rect=pygame.Rect(638, 502, 176, 46),
+    )
+
+
+def build_training_rename_button() -> ActionButton:
+    """Create the rename opening button."""
+    return ActionButton(
+        label="Editar nome",
+        rect=pygame.Rect(470, 502, 156, 46),
     )
 
 
